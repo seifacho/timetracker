@@ -129,14 +129,14 @@
   }
   .cat-card:hover{border-color:var(--border-active);}
   .cat-card.active{
-    border-color:var(--green);
+    border-color:var(--cat-color, var(--green));
     background:linear-gradient(180deg, #0c1a13, #0a1512 60%, #0d1a14);
-    box-shadow:0 0 0 1px var(--green-glow), 0 0 24px -4px var(--green-glow);
+    box-shadow:0 0 0 1px var(--cat-glow, var(--green-glow)), 0 0 24px -4px var(--cat-glow, var(--green-glow));
     animation:pulseGlow 2.4s ease-in-out infinite;
   }
   @keyframes pulseGlow{
-    0%,100%{box-shadow:0 0 0 1px var(--green-glow), 0 0 18px -6px var(--green-glow);}
-    50%{box-shadow:0 0 0 1px var(--green-glow), 0 0 30px -2px var(--green-glow);}
+    0%,100%{box-shadow:0 0 0 1px var(--cat-glow, var(--green-glow)), 0 0 18px -6px var(--cat-glow, var(--green-glow));}
+    50%{box-shadow:0 0 0 1px var(--cat-glow, var(--green-glow)), 0 0 30px -2px var(--cat-glow, var(--green-glow));}
   }
 
   .cat-top{
@@ -151,18 +151,26 @@
     font-size:15px;
     font-weight:700;
     word-break:break-word;
+    min-width:0;
   }
-  .cat-card.active .cat-name{color:var(--green);}
-  .cat-edit{
+  .cat-card.active .cat-name{color:var(--cat-color, var(--green));}
+  .cat-icon-row{
+    display:flex;
+    gap:2px;
+    flex:0 0 auto;
+  }
+  .cat-icon-btn{
     background:transparent;
     border:none;
     color:var(--muted-2);
     cursor:pointer;
-    font-size:13px;
-    padding:2px 4px;
-    flex:0 0 auto;
+    font-size:12.5px;
+    padding:3px 5px;
+    border-radius:6px;
+    line-height:1;
   }
-  .cat-edit:hover{color:var(--muted);}
+  .cat-icon-btn:hover{color:var(--muted); background:var(--panel-2);}
+  .cat-icon-btn.danger:hover{color:#ff8080; background:#ff6b6b15;}
 
   .cat-bottom{
     position:relative;
@@ -171,7 +179,7 @@
   .cat-timer{
     font-family:var(--mono);
     font-size:22px;
-    color:var(--green);
+    color:var(--cat-color, var(--green));
     letter-spacing:0.5px;
     margin-bottom:4px;
     min-height:26px;
@@ -190,15 +198,17 @@
     letter-spacing:0.6px;
     margin-top:2px;
   }
-  .cat-card.active .cat-status{color:var(--green);}
+  .cat-card.active .cat-status{color:var(--cat-color, var(--green));}
 
-  .cat-rename-row{
+  .cat-rename-row, .cat-adjust-row, .cat-delete-row{
     display:flex;
-    gap:6px;
+    flex-direction:column;
+    gap:8px;
     position:relative;
     z-index:3;
   }
-  .cat-rename-row input{
+  .cat-rename-row .fields{display:flex; gap:6px;}
+  .cat-rename-row input[type=text]{
     flex:1;
     background:var(--panel-2);
     border:1px solid var(--border-active);
@@ -208,15 +218,64 @@
     font-size:14px;
     min-width:0;
   }
-  .cat-rename-row button{
+  .cat-rename-row input[type=color]{
+    width:34px;
+    height:30px;
+    padding:2px;
+    border:1px solid var(--border-active);
+    border-radius:6px;
+    background:var(--panel-2);
+    cursor:pointer;
+    flex:0 0 auto;
+  }
+  .cat-rename-row button, .cat-adjust-row button, .cat-delete-row button{
     background:var(--green-dim);
     border:none;
     color:#eafff2;
     border-radius:6px;
-    padding:0 10px;
+    padding:6px 10px;
     cursor:pointer;
-    font-size:13px;
+    font-size:12.5px;
   }
+  .mode-toggle{display:flex; gap:4px;}
+  .mode-btn{
+    flex:1;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--muted);
+    border-radius:6px;
+    padding:5px 0;
+    font-size:11.5px;
+    cursor:pointer;
+  }
+  .mode-btn.active{border-color:var(--green); color:var(--green); background:#0e1f16;}
+  .cat-adjust-row input[type=date]{
+    background:var(--panel-2);
+    border:1px solid var(--border-active);
+    color:var(--text);
+    border-radius:6px;
+    padding:5px 6px;
+    font-size:12.5px;
+    color-scheme:dark;
+    width:100%;
+  }
+  .hm-row{display:flex; gap:6px; align-items:center;}
+  .hm-row input[type=number]{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border-active);
+    color:var(--text);
+    border-radius:6px;
+    padding:5px 6px;
+    font-size:12.5px;
+  }
+  .hm-row span{color:var(--muted-2); font-size:11px;}
+  .adjust-hint{color:var(--muted-2); font-size:10.5px; line-height:1.3;}
+  .row2{display:flex; gap:6px;}
+  .row2 button{flex:1;}
+  .row2 .cancel{background:var(--panel-2); color:var(--muted);}
+  .row2 .deduct{background:#5c1f1f; color:#ffd8d8;}
+  .cat-delete-row .delete-msg{font-size:12px; color:var(--muted); line-height:1.4;}
 
   /* wave animation */
   .wave{
@@ -307,6 +366,12 @@
     padding:18px;
     margin-bottom:16px;
   }
+  .panel h2{
+    font-size:13.5px;
+    margin:0 0 14px;
+    color:var(--text);
+    font-weight:700;
+  }
   .quick-ranges{
     display:flex;
     gap:8px;
@@ -385,6 +450,7 @@
   }
   .bar-row:last-child{border-bottom:none;}
   .bar-row .name{font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .bar-row .name.archived{color:var(--muted-2); font-weight:500; font-style:italic;}
   .bar-track{
     background:var(--panel-2);
     border-radius:6px;
@@ -433,6 +499,13 @@
   table.details td.num{font-family:var(--mono); color:var(--green);}
 
   .empty-note{color:var(--muted-2); font-size:13px; padding:12px 0;}
+
+  .chart-wrap{width:100%; overflow-x:auto;}
+  .chart-wrap svg{display:block;}
+  .chart-legend{display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:12px;}
+  .legend-item{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted);}
+  .legend-swatch{width:10px; height:10px; border-radius:3px; flex:0 0 auto;}
+  .pie-wrap{display:flex; justify-content:center;}
 
   /* ---- Settings drawer ---- */
   .settings-panel{
@@ -529,6 +602,24 @@
         <tbody id="detailsBody"></tbody>
       </table>
     </div>
+
+    <div class="panel">
+      <h2>Daily breakdown</h2>
+      <div class="chart-wrap" id="dailyChartWrap"></div>
+      <div class="chart-legend" id="dailyLegend"></div>
+      <div class="empty-note" id="dailyEmptyNote" style="display:none;"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Share of time</h2>
+      <div class="pie-wrap" id="pieWrap"></div>
+      <div class="chart-legend" id="pieLegend"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Weekly total &mdash; last 8 weeks</h2>
+      <div class="chart-wrap" id="trendChartWrap"></div>
+    </div>
   </section>
 
 </div>
@@ -537,6 +628,7 @@
 (function(){
   "use strict";
   const STORAGE_KEY = "timetracker_v1";
+  const DEFAULT_COLOR = "#2bff8c";
 
   function genId(prefix){
     return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -545,12 +637,13 @@
   function defaultState(){
     return {
       categories:[
-        {id:genId("cat"), name:"Work 1"},
-        {id:genId("cat"), name:"Work 2"},
-        {id:genId("cat"), name:"Work 3"},
-        {id:genId("cat"), name:"Other"}
+        {id:genId("cat"), name:"Work 1", color:DEFAULT_COLOR, archived:false},
+        {id:genId("cat"), name:"Work 2", color:DEFAULT_COLOR, archived:false},
+        {id:genId("cat"), name:"Work 3", color:DEFAULT_COLOR, archived:false},
+        {id:genId("cat"), name:"Other", color:DEFAULT_COLOR, archived:false}
       ],
-      sessions:[]
+      sessions:[],
+      adjustments:[]
     };
   }
 
@@ -559,7 +652,14 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if(raw){
         const parsed = JSON.parse(raw);
-        if(parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.sessions)) return parsed;
+        if(parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.sessions)){
+          parsed.categories.forEach(c => {
+            if(!c.color) c.color = DEFAULT_COLOR;
+            if(c.archived == null) c.archived = false;
+          });
+          if(!Array.isArray(parsed.adjustments)) parsed.adjustments = [];
+          return parsed;
+        }
       }
     }catch(e){}
     return defaultState();
@@ -610,6 +710,13 @@
   function fmtDateLabel(d){
     return d.toLocaleDateString(undefined, {month:"short", day:"numeric"});
   }
+  function hexToRgba(hex, alpha){
+    let h = (hex || DEFAULT_COLOR).replace("#","");
+    if(h.length === 3) h = h.split("").map(c => c+c).join("");
+    const num = parseInt(h, 16) || 0x2bff8c;
+    const r = (num >> 16) & 255, g = (num >> 8) & 255, b = num & 255;
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
 
   function clippedDuration(session, rangeStart, rangeEnd){
     const s = session.start;
@@ -626,6 +733,13 @@
       if(!(s.categoryId in totals)) totals[s.categoryId] = 0;
       totals[s.categoryId] += clippedDuration(s, rangeStart, rangeEnd);
     }
+    for(const adj of state.adjustments){
+      if(adj.date >= rangeStart && adj.date < rangeEnd){
+        if(!(adj.categoryId in totals)) totals[adj.categoryId] = 0;
+        totals[adj.categoryId] += adj.amountMs;
+      }
+    }
+    for(const id in totals) totals[id] = Math.max(0, totals[id]);
     return totals;
   }
 
@@ -660,39 +774,71 @@
   function addCategory(name){
     name = name.trim();
     if(!name) return;
-    state.categories.push({id:genId("cat"), name});
+    state.categories.push({id:genId("cat"), name, color:DEFAULT_COLOR, archived:false});
     save();
     renderTracker();
   }
 
-  function renameCategory(id, newName){
+  function renameCategory(id, newName, newColor){
     newName = newName.trim();
     if(!newName) return;
     const cat = state.categories.find(c => c.id === id);
     if(cat){
       cat.name = newName;
+      if(newColor) cat.color = newColor;
       save();
       renderTracker();
       if(document.getElementById("viewDashboard").classList.contains("active")) renderDashboard();
     }
   }
 
+  function deleteCategory(id){
+    const cat = state.categories.find(c => c.id === id);
+    if(!cat) return;
+    const active = getActiveSession();
+    if(active && active.categoryId === id) active.end = Date.now();
+    cat.archived = true;
+    save();
+    renderTracker();
+    if(document.getElementById("viewDashboard").classList.contains("active")) renderDashboard();
+  }
+
+  function addAdjustment(categoryId, dateMs, amountMs){
+    if(!amountMs) return;
+    state.adjustments.push({id:genId("adj"), categoryId, date:dateMs, amountMs, createdAt:Date.now()});
+    save();
+    renderTracker();
+    if(document.getElementById("viewDashboard").classList.contains("active")) renderDashboard();
+  }
+
   // ---------- wave svg ----------
-  const WAVE_SVG = `
+  function waveSvg(color){
+    const c1 = hexToRgba(color, 0.16);
+    const c2 = hexToRgba(color, 0.30);
+    return `
     <svg viewBox="0 0 200 44" preserveAspectRatio="none">
       <path d="M0,26 C15,10 35,10 50,26 C65,42 85,42 100,26 C115,10 135,10 150,26 C165,42 185,42 200,26 L200,44 L0,44 Z"
-            fill="rgba(43,255,140,0.16)">
+            fill="${c1}">
         <animateTransform attributeName="transform" type="translate" from="0 0" to="-100 0" dur="3.2s" repeatCount="indefinite"/>
       </path>
       <path d="M0,30 C15,18 35,18 50,30 C65,42 85,42 100,30 C115,18 135,18 150,30 C165,42 185,42 200,30 L200,44 L0,44 Z"
-            fill="rgba(43,255,140,0.30)">
+            fill="${c2}">
         <animateTransform attributeName="transform" type="translate" from="0 0" to="-100 0" dur="1.9s" repeatCount="indefinite"/>
       </path>
     </svg>`;
+  }
 
   // ---------- rendering: tracker ----------
   let addingCategory = false;
   let editingCategoryId = null;
+  let adjustingCategoryId = null;
+  let deletingCategoryId = null;
+
+  function closeAllCardPanels(){
+    editingCategoryId = null;
+    adjustingCategoryId = null;
+    deletingCategoryId = null;
+  }
 
   function renderTracker(){
     const grid = document.getElementById("catGrid");
@@ -707,45 +853,42 @@
       `This week so far: <b>${fmtHoursMinutes(weekTotalMs)}</b>`;
 
     const active = getActiveSession();
+    const visibleCategories = state.categories.filter(c => !c.archived);
 
     grid.innerHTML = "";
-    for(const cat of state.categories){
+    for(const cat of visibleCategories){
       const card = document.createElement("div");
       card.className = "cat-card" + (active && active.categoryId === cat.id ? " active" : "");
       card.dataset.id = cat.id;
+      card.style.setProperty("--cat-color", cat.color || DEFAULT_COLOR);
+      card.style.setProperty("--cat-glow", hexToRgba(cat.color || DEFAULT_COLOR, 0.35));
 
       const wave = document.createElement("div");
       wave.className = "wave";
-      wave.innerHTML = WAVE_SVG;
+      wave.innerHTML = waveSvg(cat.color || DEFAULT_COLOR);
       card.appendChild(wave);
 
       if(editingCategoryId === cat.id){
-        const row = document.createElement("div");
-        row.className = "cat-rename-row";
-        row.style.position = "relative";
-        row.style.zIndex = "3";
-        row.innerHTML = `<input type="text" value="${escapeHtml(cat.name)}" maxlength="40" />
-          <button class="save">&#10003;</button>`;
-        card.appendChild(row);
-        const input = row.querySelector("input");
-        const saveBtn = row.querySelector(".save");
-        const commit = () => { editingCategoryId = null; renameCategory(cat.id, input.value); };
-        saveBtn.addEventListener("click", (e)=>{ e.stopPropagation(); commit(); });
-        input.addEventListener("click", e => e.stopPropagation());
-        input.addEventListener("keydown", e => {
-          if(e.key === "Enter"){ commit(); }
-          if(e.key === "Escape"){ editingCategoryId = null; renderTracker(); }
-        });
-        card.addEventListener("click", e => e.stopPropagation());
-        grid.appendChild(card);
-        setTimeout(()=>{ input.focus(); input.select(); }, 0);
+        renderRenameForm(card, cat, grid);
+        continue;
+      }
+      if(adjustingCategoryId === cat.id){
+        renderAdjustForm(card, cat, grid);
+        continue;
+      }
+      if(deletingCategoryId === cat.id){
+        renderDeleteForm(card, cat, grid);
         continue;
       }
 
       const top = document.createElement("div");
       top.className = "cat-top";
       top.innerHTML = `<div class="cat-name">${escapeHtml(cat.name)}</div>
-        <button class="cat-edit" title="Rename">&#9998;</button>`;
+        <div class="cat-icon-row">
+          <button class="cat-icon-btn" data-action="rename" title="Rename / color">&#9998;</button>
+          <button class="cat-icon-btn" data-action="adjust" title="Add or deduct hours">&#177;</button>
+          <button class="cat-icon-btn danger" data-action="delete" title="Delete">&#128465;</button>
+        </div>`;
       card.appendChild(top);
 
       const bottom = document.createElement("div");
@@ -759,9 +902,22 @@
       card.appendChild(bottom);
 
       card.addEventListener("click", () => startTracking(cat.id));
-      top.querySelector(".cat-edit").addEventListener("click", (e) => {
+      top.querySelector('[data-action="rename"]').addEventListener("click", (e) => {
         e.stopPropagation();
+        closeAllCardPanels();
         editingCategoryId = cat.id;
+        renderTracker();
+      });
+      top.querySelector('[data-action="adjust"]').addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAllCardPanels();
+        adjustingCategoryId = cat.id;
+        renderTracker();
+      });
+      top.querySelector('[data-action="delete"]').addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAllCardPanels();
+        deletingCategoryId = cat.id;
         renderTracker();
       });
 
@@ -816,6 +972,129 @@
     }
   }
 
+  function renderRenameForm(card, cat, grid){
+    const row = document.createElement("div");
+    row.className = "cat-rename-row";
+    row.innerHTML = `
+      <div class="fields">
+        <input type="color" value="${cat.color || DEFAULT_COLOR}" />
+        <input type="text" value="${escapeHtml(cat.name)}" maxlength="40" />
+      </div>
+      <div class="row2">
+        <button class="save">Save</button>
+        <button class="cancel">Cancel</button>
+      </div>`;
+    card.appendChild(row);
+    const colorInput = row.querySelector('input[type=color]');
+    const nameInput = row.querySelector('input[type=text]');
+    const commit = () => {
+      editingCategoryId = null;
+      renameCategory(cat.id, nameInput.value, colorInput.value);
+    };
+    row.querySelector(".save").addEventListener("click", (e) => { e.stopPropagation(); commit(); });
+    row.querySelector(".cancel").addEventListener("click", (e) => {
+      e.stopPropagation();
+      editingCategoryId = null;
+      renderTracker();
+    });
+    row.addEventListener("click", e => e.stopPropagation());
+    nameInput.addEventListener("keydown", e => {
+      if(e.key === "Enter"){ commit(); }
+      if(e.key === "Escape"){ editingCategoryId = null; renderTracker(); }
+    });
+    card.addEventListener("click", e => e.stopPropagation());
+    grid.appendChild(card);
+    setTimeout(()=>{ nameInput.focus(); nameInput.select(); }, 0);
+  }
+
+  function renderAdjustForm(card, cat, grid){
+    const row = document.createElement("div");
+    row.className = "cat-adjust-row";
+    const today = toDateInputValue(new Date());
+    row.innerHTML = `
+      <div class="mode-toggle">
+        <button type="button" class="mode-btn active" data-mode="day">Day</button>
+        <button type="button" class="mode-btn" data-mode="week">Week</button>
+      </div>
+      <input type="date" class="adjust-date" value="${today}" />
+      <div class="hm-row">
+        <input type="number" class="adjust-h" min="0" max="999" placeholder="0" />
+        <span>h</span>
+        <input type="number" class="adjust-m" min="0" max="59" placeholder="0" />
+        <span>m</span>
+      </div>
+      <div class="adjust-hint">Week mode applies the whole amount to that week's Monday.</div>
+      <div class="row2">
+        <button class="add">+ Add</button>
+        <button class="deduct">&minus; Deduct</button>
+      </div>
+      <div class="row2">
+        <button class="cancel">Cancel</button>
+      </div>`;
+    card.appendChild(row);
+    row.addEventListener("click", e => e.stopPropagation());
+
+    let mode = "day";
+    const modeBtns = row.querySelectorAll(".mode-btn");
+    modeBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        mode = btn.dataset.mode;
+        modeBtns.forEach(b => b.classList.toggle("active", b === btn));
+      });
+    });
+
+    const dateInput = row.querySelector(".adjust-date");
+    const hInput = row.querySelector(".adjust-h");
+    const mInput = row.querySelector(".adjust-m");
+
+    const apply = (sign) => {
+      const h = parseInt(hInput.value, 10) || 0;
+      const m = parseInt(mInput.value, 10) || 0;
+      const amountMs = (h * 60 + m) * 60000;
+      if(amountMs <= 0 || !dateInput.value) return;
+      let dateMs;
+      if(mode === "week"){
+        dateMs = getWeekStart(dateFromInputStartOfDay(dateInput.value)).getTime();
+      } else {
+        dateMs = dateFromInputStartOfDay(dateInput.value).getTime();
+      }
+      adjustingCategoryId = null;
+      addAdjustment(cat.id, dateMs, sign * amountMs);
+    };
+
+    row.querySelector(".add").addEventListener("click", () => apply(1));
+    row.querySelector(".deduct").addEventListener("click", () => apply(-1));
+    row.querySelector(".cancel").addEventListener("click", () => {
+      adjustingCategoryId = null;
+      renderTracker();
+    });
+    card.addEventListener("click", e => e.stopPropagation());
+    grid.appendChild(card);
+  }
+
+  function renderDeleteForm(card, cat, grid){
+    const row = document.createElement("div");
+    row.className = "cat-delete-row";
+    row.innerHTML = `
+      <div class="delete-msg">Delete "${escapeHtml(cat.name)}"? It disappears from the tracker, but its tracked hours stay in your Dashboard history.</div>
+      <div class="row2">
+        <button class="deduct confirm">Delete</button>
+        <button class="cancel">Cancel</button>
+      </div>`;
+    card.appendChild(row);
+    row.addEventListener("click", e => e.stopPropagation());
+    row.querySelector(".confirm").addEventListener("click", () => {
+      deletingCategoryId = null;
+      deleteCategory(cat.id);
+    });
+    row.querySelector(".cancel").addEventListener("click", () => {
+      deletingCategoryId = null;
+      renderTracker();
+    });
+    card.addEventListener("click", e => e.stopPropagation());
+    grid.appendChild(card);
+  }
+
   function escapeHtml(str){
     const div = document.createElement("div");
     div.textContent = str;
@@ -849,7 +1128,7 @@
   document.getElementById("stopBtn").addEventListener("click", stopTracking);
 
   // ---------- rendering: dashboard ----------
-  let currentRange = null; // {start, end, label}
+  let currentRange = null; // {start, end}
 
   function setQuickRangeActive(key){
     document.querySelectorAll("#quickRanges button").forEach(b=>{
@@ -871,11 +1150,14 @@
       start = new Date(now.getFullYear(), now.getMonth(), 1);
       end = new Date(now.getFullYear(), now.getMonth()+1, 1);
     } else { // all
-      if(state.sessions.length === 0){
+      const earliestTimes = [
+        ...state.sessions.map(s=>s.start),
+        ...state.adjustments.map(a=>a.date)
+      ];
+      if(earliestTimes.length === 0){
         start = getWeekStart(now);
       } else {
-        const earliest = Math.min(...state.sessions.map(s=>s.start));
-        start = new Date(earliest);
+        start = new Date(Math.min(...earliestTimes));
         start.setHours(0,0,0,0);
       }
       end = addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 1);
@@ -912,6 +1194,7 @@
     document.getElementById("totalHours").textContent = fmtHoursMinutes(totalMs);
 
     const rows = state.categories
+      .filter(cat => !cat.archived || (totals[cat.id]||0) > 0)
       .map(cat => ({cat, ms: totals[cat.id] || 0}))
       .sort((a,b) => b.ms - a.ms);
 
@@ -920,20 +1203,16 @@
     const emptyNote = document.getElementById("emptyNote");
     barList.innerHTML = "";
 
-    if(totalMs === 0){
-      emptyNote.style.display = "block";
-    } else {
-      emptyNote.style.display = "none";
-    }
+    emptyNote.style.display = totalMs === 0 ? "block" : "none";
 
-    rows.forEach((r, i) => {
+    rows.forEach(r => {
       const ratio = r.ms / maxMs;
-      const lightness = 34 + Math.round(ratio * 30); // sequential green ramp by magnitude
       const row = document.createElement("div");
       row.className = "bar-row";
+      const nameLabel = escapeHtml(r.cat.name) + (r.cat.archived ? " (deleted)" : "");
       row.innerHTML = `
-        <div class="name">${escapeHtml(r.cat.name)}</div>
-        <div class="bar-track"><div class="bar-fill" style="width:${(ratio*100).toFixed(1)}%; background:hsl(150,85%,${lightness}%);"></div></div>
+        <div class="name${r.cat.archived ? " archived" : ""}">${nameLabel}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(ratio*100).toFixed(1)}%; background:${r.cat.color || DEFAULT_COLOR};"></div></div>
         <div class="value">${fmtHoursMinutes(r.ms)}</div>
       `;
       barList.appendChild(row);
@@ -944,9 +1223,156 @@
     rows.forEach(r => {
       const pct = totalMs > 0 ? ((r.ms / totalMs) * 100).toFixed(1) : "0.0";
       const tr = document.createElement("tr");
-      tr.innerHTML = `<td class="cat">${escapeHtml(r.cat.name)}</td><td class="num">${fmtHoursMinutes(r.ms)}</td><td>${pct}%</td>`;
+      const nameLabel = escapeHtml(r.cat.name) + (r.cat.archived ? " (deleted)" : "");
+      tr.innerHTML = `<td class="cat">${nameLabel}</td><td class="num">${fmtHoursMinutes(r.ms)}</td><td>${pct}%</td>`;
       body.appendChild(tr);
     });
+
+    renderDailyChart(start, end);
+    renderPieChart(totals, totalMs);
+    renderTrendChart();
+  }
+
+  function renderDailyChart(start, end){
+    const wrap = document.getElementById("dailyChartWrap");
+    const legend = document.getElementById("dailyLegend");
+    const note = document.getElementById("dailyEmptyNote");
+    const dayMs = 86400000;
+    const numDays = Math.round((end - start) / dayMs);
+
+    if(numDays > 60){
+      wrap.innerHTML = "";
+      legend.innerHTML = "";
+      note.style.display = "block";
+      note.textContent = `Pick a range of 60 days or less to see the daily breakdown (currently ${numDays} days).`;
+      return;
+    }
+
+    const cats = state.categories.filter(c => !c.archived);
+    const days = [];
+    for(let i=0;i<numDays;i++){
+      const dayStart = start + i*dayMs;
+      days.push({date:new Date(dayStart), totals:totalsForRange(dayStart, dayStart+dayMs)});
+    }
+    const dayTotalsSum = days.map(d => cats.reduce((s,c)=>s+(d.totals[c.id]||0),0));
+    const maxMs = Math.max(1, ...dayTotalsSum);
+
+    if(maxMs <= 1 && dayTotalsSum.every(v => v === 0)){
+      wrap.innerHTML = "";
+      legend.innerHTML = "";
+      note.style.display = "block";
+      note.textContent = "No time tracked in this range yet.";
+      return;
+    }
+    note.style.display = "none";
+
+    const width = Math.max(360, numDays*36);
+    const chartH = 130;
+    const height = 156;
+    const slotW = width / numDays;
+    const barW = Math.min(28, slotW - 6);
+
+    let bars = "";
+    days.forEach((d,i) => {
+      let yOffset = 0;
+      const x = i*slotW + (slotW-barW)/2;
+      cats.forEach(cat => {
+        const ms = d.totals[cat.id] || 0;
+        if(ms <= 0) return;
+        const h = (ms/maxMs)*chartH;
+        const y = chartH - yOffset - h;
+        bars += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(h,1).toFixed(1)}" fill="${cat.color || DEFAULT_COLOR}" rx="2"><title>${escapeHtml(cat.name)}: ${fmtHoursMinutes(ms)} on ${fmtDateLabel(d.date)}</title></rect>`;
+        yOffset += h;
+      });
+    });
+
+    const labelEvery = numDays <= 14 ? 1 : Math.ceil(numDays/12);
+    let labels = "";
+    days.forEach((d,i) => {
+      if(i % labelEvery !== 0) return;
+      const x = i*slotW + slotW/2;
+      labels += `<text x="${x.toFixed(1)}" y="${chartH+16}" font-size="10" text-anchor="middle" style="fill:var(--muted)">${fmtDateLabel(d.date)}</text>`;
+    });
+
+    wrap.innerHTML = `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" style="min-width:${width}px;">
+        <line x1="0" y1="${chartH}" x2="${width}" y2="${chartH}" style="stroke:var(--border)" stroke-width="1"/>
+        ${bars}
+        ${labels}
+      </svg>`;
+
+    legend.innerHTML = cats.map(c => `<span class="legend-item"><span class="legend-swatch" style="background:${c.color || DEFAULT_COLOR}"></span>${escapeHtml(c.name)}</span>`).join("");
+  }
+
+  function renderPieChart(totals, totalMs){
+    const wrap = document.getElementById("pieWrap");
+    const legend = document.getElementById("pieLegend");
+    const cats = state.categories.filter(cat => (totals[cat.id]||0) > 0);
+
+    if(totalMs <= 0 || cats.length === 0){
+      wrap.innerHTML = `<div class="empty-note">No time tracked in this range yet.</div>`;
+      legend.innerHTML = "";
+      return;
+    }
+
+    cats.sort((a,b) => (totals[b.id]||0) - (totals[a.id]||0));
+
+    const size = 180, r = 68, cx = size/2, cy = size/2, circumference = 2*Math.PI*r;
+    let offset = 0;
+    let arcs = "";
+    cats.forEach(cat => {
+      const ms = totals[cat.id] || 0;
+      const frac = ms / totalMs;
+      const dash = frac * circumference;
+      arcs += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${cat.color || DEFAULT_COLOR}" stroke-width="22"
+        stroke-dasharray="${dash.toFixed(2)} ${(circumference-dash).toFixed(2)}"
+        stroke-dashoffset="${(-offset).toFixed(2)}" transform="rotate(-90 ${cx} ${cy})">
+        <title>${escapeHtml(cat.name)}: ${fmtHoursMinutes(ms)} (${(frac*100).toFixed(1)}%)</title>
+        </circle>`;
+      offset += dash;
+    });
+
+    wrap.innerHTML = `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}">
+        ${arcs}
+        <text x="${cx}" y="${cy-3}" text-anchor="middle" font-size="16" font-weight="700" style="fill:var(--text)">${fmtHoursMinutes(totalMs)}</text>
+        <text x="${cx}" y="${cy+15}" text-anchor="middle" font-size="10" style="fill:var(--muted)">total</text>
+      </svg>`;
+
+    legend.innerHTML = cats.map(cat => {
+      const ms = totals[cat.id] || 0;
+      const pct = ((ms/totalMs)*100).toFixed(1);
+      return `<span class="legend-item"><span class="legend-swatch" style="background:${cat.color || DEFAULT_COLOR}"></span>${escapeHtml(cat.name)} &middot; ${pct}%</span>`;
+    }).join("");
+  }
+
+  function renderTrendChart(){
+    const now = new Date();
+    const thisWeekStart = getWeekStart(now);
+    const weeks = [];
+    for(let i=7;i>=0;i--){
+      const ws = addDays(thisWeekStart, -7*i);
+      const we = addDays(ws, 7);
+      const totals = totalsForRange(ws.getTime(), we.getTime());
+      const sum = Object.values(totals).reduce((a,b)=>a+b,0);
+      weeks.push({start:ws, ms:sum});
+    }
+    const maxMs = Math.max(1, ...weeks.map(w=>w.ms));
+    const width = 560, height = 160, chartH = 110, padL = 14, padR = 14;
+    const stepX = (width - padL - padR) / (weeks.length - 1);
+    const points = weeks.map((w,i) => ({
+      x: padL + i*stepX,
+      y: chartH - (w.ms/maxMs)*chartH,
+      w
+    }));
+    const path = points.map((p,i) => (i===0 ? "M" : "L") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ");
+    const dots = points.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="var(--green)"><title>Week of ${fmtDateLabel(p.w.start)}: ${fmtHoursMinutes(p.w.ms)}</title></circle>`).join("");
+    const labels = points.map((p,i) => i % 2 === 0 ? `<text x="${p.x.toFixed(1)}" y="${chartH+16}" font-size="10" text-anchor="middle" style="fill:var(--muted)">${fmtDateLabel(p.w.start)}</text>` : "").join("");
+
+    document.getElementById("trendChartWrap").innerHTML = `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}">
+        <line x1="${padL}" y1="${chartH}" x2="${width-padR}" y2="${chartH}" style="stroke:var(--border)" stroke-width="1"/>
+        <path d="${path}" fill="none" stroke="var(--green)" stroke-width="2"/>
+        ${dots}
+        ${labels}
+      </svg>`;
   }
 
   document.getElementById("applyRange").addEventListener("click", applyCustomRange);
@@ -1010,8 +1436,14 @@
           alert("That file doesn't look like a valid TimeTracker backup.");
           return;
         }
+        parsed.categories.forEach(c => {
+          if(!c.color) c.color = DEFAULT_COLOR;
+          if(c.archived == null) c.archived = false;
+        });
+        if(!Array.isArray(parsed.adjustments)) parsed.adjustments = [];
         state = parsed;
         save();
+        closeAllCardPanels();
         renderTracker();
         currentRange = null;
         if(viewDashboard.classList.contains("active")) applyQuickRange("week");
