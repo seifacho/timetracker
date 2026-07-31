@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>TimeTracker</title>
+<style>
+  :root{
+    --bg:#07090a;
+    --panel:#0d1310;
+    --panel-2:#121a17;
+    --border:#1c2822;
+    --border-active:#1e5c3a;
+    --green:#2bff8c;
+    --green-dim:#0f7a44;
+    --green-glow:rgba(43,255,140,0.35);
+    --text:#e7f3ec;
+    --muted:#7c9488;
+    --muted-2:#4d5f57;
+    --radius:14px;
+    --mono:'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    min-height:100vh;
+  }
+  .wrap{
+    max-width:960px;
+    margin:0 auto;
+    padding:28px 20px 60px;
+  }
+  header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:24px;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .brand h1{
+    font-size:20px;
+    margin:0;
+    letter-spacing:0.3px;
+  }
+  .brand h1 span{color:var(--green);}
+  .brand .week-label{
+    color:var(--muted);
+    font-size:13px;
+  }
+  nav.tabs{
+    display:flex;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:999px;
+    padding:4px;
+    gap:4px;
+  }
+  nav.tabs button{
+    border:none;
+    background:transparent;
+    color:var(--muted);
+    padding:8px 16px;
+    border-radius:999px;
+    font-size:13px;
+    cursor:pointer;
+    font-weight:600;
+    transition:background .15s, color .15s;
+  }
+  nav.tabs button.active{
+    background:var(--green-dim);
+    color:#04140a;
+    background:var(--green);
+  }
+  .icon-btn{
+    background:var(--panel);
+    border:1px solid var(--border);
+    color:var(--muted);
+    width:36px;
+    height:36px;
+    border-radius:10px;
+    cursor:pointer;
+    font-size:15px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:border-color .15s, color .15s;
+  }
+  .icon-btn:hover{border-color:var(--border-active); color:var(--green);}
+
+  section{display:none;}
+  section.active{display:block;}
+
+  /* ---- Tracker view ---- */
+  .week-summary{
+    color:var(--muted);
+    font-size:13px;
+    margin-bottom:16px;
+  }
+  .week-summary b{color:var(--text);}
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(220px,1fr));
+    gap:14px;
+  }
+
+  .cat-card{
+    position:relative;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px;
+    min-height:140px;
+    cursor:pointer;
+    overflow:hidden;
+    transition:border-color .2s, box-shadow .2s, background .2s;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+  }
+  .cat-card:hover{border-color:var(--border-active);}
+  .cat-card.active{
+    border-color:var(--green);
+    background:linear-gradient(180deg, #0c1a13, #0a1512 60%, #0d1a14);
+    box-shadow:0 0 0 1px var(--green-glow), 0 0 24px -4px var(--green-glow);
+    animation:pulseGlow 2.4s ease-in-out infinite;
+  }
+  @keyframes pulseGlow{
+    0%,100%{box-shadow:0 0 0 1px var(--green-glow), 0 0 18px -6px var(--green-glow);}
+    50%{box-shadow:0 0 0 1px var(--green-glow), 0 0 30px -2px var(--green-glow);}
+  }
+
+  .cat-top{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:8px;
+    position:relative;
+    z-index:2;
+  }
+  .cat-name{
+    font-size:15px;
+    font-weight:700;
+    word-break:break-word;
+  }
+  .cat-card.active .cat-name{color:var(--green);}
+  .cat-edit{
+    background:transparent;
+    border:none;
+    color:var(--muted-2);
+    cursor:pointer;
+    font-size:13px;
+    padding:2px 4px;
+    flex:0 0 auto;
+  }
+  .cat-edit:hover{color:var(--muted);}
+
+  .cat-bottom{
+    position:relative;
+    z-index:2;
+  }
+  .cat-timer{
+    font-family:var(--mono);
+    font-size:22px;
+    color:var(--green);
+    letter-spacing:0.5px;
+    margin-bottom:4px;
+    min-height:26px;
+    visibility:hidden;
+  }
+  .cat-card.active .cat-timer{visibility:visible;}
+  .cat-week{
+    color:var(--muted);
+    font-size:12.5px;
+  }
+  .cat-card.active .cat-week{color:#a9d9c1;}
+  .cat-status{
+    color:var(--muted-2);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.6px;
+    margin-top:2px;
+  }
+  .cat-card.active .cat-status{color:var(--green);}
+
+  .cat-rename-row{
+    display:flex;
+    gap:6px;
+    position:relative;
+    z-index:3;
+  }
+  .cat-rename-row input{
+    flex:1;
+    background:var(--panel-2);
+    border:1px solid var(--border-active);
+    color:var(--text);
+    border-radius:6px;
+    padding:5px 8px;
+    font-size:14px;
+    min-width:0;
+  }
+  .cat-rename-row button{
+    background:var(--green-dim);
+    border:none;
+    color:#eafff2;
+    border-radius:6px;
+    padding:0 10px;
+    cursor:pointer;
+    font-size:13px;
+  }
+
+  /* wave animation */
+  .wave{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    height:44px;
+    overflow:hidden;
+    opacity:0;
+    transition:opacity .3s;
+    z-index:1;
+    pointer-events:none;
+  }
+  .cat-card.active .wave{opacity:1;}
+  .wave svg{display:block; width:200%; height:100%;}
+
+  .add-card{
+    background:transparent;
+    border:1.5px dashed var(--border);
+    border-radius:var(--radius);
+    min-height:140px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:14px;
+    transition:border-color .15s, color .15s;
+  }
+  .add-card:hover{border-color:var(--green-dim); color:var(--green);}
+  .add-card.editing{
+    flex-direction:column;
+    gap:10px;
+    padding:16px;
+    cursor:default;
+    border-style:solid;
+  }
+  .add-card input{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border-active);
+    color:var(--text);
+    border-radius:8px;
+    padding:8px 10px;
+    font-size:14px;
+  }
+  .add-card .row{display:flex; gap:8px; width:100%;}
+  .add-card .row button{
+    flex:1;
+    border:none;
+    border-radius:8px;
+    padding:8px 0;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:600;
+  }
+  .add-card .row .save{background:var(--green); color:#04140a;}
+  .add-card .row .cancel{background:var(--panel-2); color:var(--muted);}
+
+  .stop-bar{
+    margin-top:18px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:12px 16px;
+  }
+  .stop-bar .label{color:var(--muted); font-size:13px;}
+  .stop-bar .label b{color:var(--green);}
+  .stop-bar button{
+    background:transparent;
+    border:1px solid #ff6b6b55;
+    color:#ff8080;
+    padding:8px 16px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:600;
+  }
+  .stop-bar button:hover{background:#ff6b6b15;}
+
+  /* ---- Dashboard view ---- */
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px;
+    margin-bottom:16px;
+  }
+  .quick-ranges{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .quick-ranges button{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--muted);
+    padding:7px 14px;
+    border-radius:999px;
+    font-size:12.5px;
+    cursor:pointer;
+  }
+  .quick-ranges button.active{
+    border-color:var(--green);
+    color:var(--green);
+    background:#0e1f16;
+  }
+  .range-row{
+    display:flex;
+    align-items:flex-end;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .range-row label{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    font-size:12px;
+    color:var(--muted);
+  }
+  .range-row input[type=date]{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:13px;
+    color-scheme:dark;
+  }
+  .range-row button.apply{
+    background:var(--green);
+    color:#04140a;
+    border:none;
+    padding:9px 18px;
+    border-radius:8px;
+    font-weight:700;
+    cursor:pointer;
+    font-size:13px;
+  }
+
+  .stat-tile{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+    margin-bottom:6px;
+  }
+  .stat-tile .num{
+    font-family:var(--mono);
+    font-size:34px;
+    color:var(--green);
+    font-weight:700;
+  }
+  .stat-tile .sub{color:var(--muted); font-size:13px;}
+  .range-caption{color:var(--muted-2); font-size:12px; margin-bottom:4px;}
+
+  .bar-row{
+    display:grid;
+    grid-template-columns:120px 1fr 90px;
+    align-items:center;
+    gap:12px;
+    padding:8px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .bar-row:last-child{border-bottom:none;}
+  .bar-row .name{font-size:13.5px; font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .bar-track{
+    background:var(--panel-2);
+    border-radius:6px;
+    height:14px;
+    overflow:hidden;
+    position:relative;
+  }
+  .bar-fill{
+    height:100%;
+    border-radius:6px;
+    transition:width .3s ease;
+  }
+  .bar-row .value{
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--muted);
+    text-align:right;
+  }
+
+  .table-toggle{
+    background:transparent;
+    border:none;
+    color:var(--muted);
+    font-size:12.5px;
+    cursor:pointer;
+    text-decoration:underline;
+    padding:0;
+    margin-top:10px;
+  }
+  table.details{
+    width:100%;
+    border-collapse:collapse;
+    margin-top:12px;
+    font-size:13px;
+    display:none;
+  }
+  table.details.show{display:table;}
+  table.details th, table.details td{
+    text-align:left;
+    padding:8px 6px;
+    border-bottom:1px solid var(--border);
+    color:var(--muted);
+  }
+  table.details th{color:var(--muted-2); font-weight:600; font-size:11.5px; text-transform:uppercase; letter-spacing:0.4px;}
+  table.details td.cat{color:var(--text); font-weight:600;}
+  table.details td.num{font-family:var(--mono); color:var(--green);}
+
+  .empty-note{color:var(--muted-2); font-size:13px; padding:12px 0;}
+
+  /* ---- Settings drawer ---- */
+  .settings-panel{
+    display:none;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:16px;
+    margin-bottom:20px;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .settings-panel.show{display:flex;}
+  .settings-panel .desc{color:var(--muted); font-size:12.5px; flex:1 1 220px;}
+  .settings-panel button{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:8px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    font-size:12.5px;
+  }
+  .settings-panel button:hover{border-color:var(--border-active);}
+
+  @media (max-width:520px){
+    .bar-row{grid-template-columns:90px 1fr 74px;}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <h1>Time<span>Tracker</span></h1>
+      <span class="week-label" id="weekLabel"></span>
+    </div>
+    <div style="display:flex; align-items:center; gap:8px;">
+      <nav class="tabs">
+        <button id="tabTracker" class="active">Tracker</button>
+        <button id="tabDashboard">Dashboard</button>
+      </nav>
+      <button class="icon-btn" id="settingsBtn" title="Settings">&#9881;</button>
+    </div>
+  </header>
+
+  <div class="settings-panel" id="settingsPanel">
+    <span class="desc">Data is stored only in this browser. Export a backup regularly, or import one to restore it.</span>
+    <button id="exportBtn">Export JSON</button>
+    <button id="importBtn">Import JSON</button>
+    <input type="file" id="importFile" accept="application/json" style="display:none" />
+  </div>
+
+  <!-- Tracker -->
+  <section id="viewTracker" class="active">
+    <div class="week-summary" id="weekSummary"></div>
+    <div class="grid" id="catGrid"></div>
+
+    <div class="stop-bar" id="stopBar" style="display:none;">
+      <div class="label">Currently tracking <b id="activeCatName"></b> &mdash; <span id="activeElapsed"></span></div>
+      <button id="stopBtn">Stop</button>
+    </div>
+  </section>
+
+  <!-- Dashboard -->
+  <section id="viewDashboard">
+    <div class="panel">
+      <div class="quick-ranges" id="quickRanges">
+        <button data-range="week">This Week</button>
+        <button data-range="lastweek">Last Week</button>
+        <button data-range="month">This Month</button>
+        <button data-range="all">All Time</button>
+      </div>
+      <div class="range-row">
+        <label>From <input type="date" id="fromDate" /></label>
+        <label>To <input type="date" id="toDate" /></label>
+        <button class="apply" id="applyRange">Apply</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="range-caption" id="rangeCaption"></div>
+      <div class="stat-tile">
+        <div class="num" id="totalHours">0h 00m</div>
+        <div class="sub">total tracked</div>
+      </div>
+      <div id="barList"></div>
+      <div class="empty-note" id="emptyNote" style="display:none;">No time tracked in this range yet.</div>
+      <button class="table-toggle" id="tableToggle">Show details table</button>
+      <table class="details" id="detailsTable">
+        <thead><tr><th>Category</th><th>Hours</th><th>% of range</th></tr></thead>
+        <tbody id="detailsBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</div>
+
+<script>
+(function(){
+  "use strict";
+  const STORAGE_KEY = "timetracker_v1";
+
+  function genId(prefix){
+    return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+  }
+
+  function defaultState(){
+    return {
+      categories:[
+        {id:genId("cat"), name:"Work 1"},
+        {id:genId("cat"), name:"Work 2"},
+        {id:genId("cat"), name:"Work 3"},
+        {id:genId("cat"), name:"Other"}
+      ],
+      sessions:[]
+    };
+  }
+
+  function load(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(raw){
+        const parsed = JSON.parse(raw);
+        if(parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.sessions)) return parsed;
+      }
+    }catch(e){}
+    return defaultState();
+  }
+
+  function save(){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  let state = load();
+
+  // ---------- time helpers ----------
+  function getWeekStart(date){
+    const d = new Date(date);
+    d.setHours(0,0,0,0);
+    const day = d.getDay(); // 0 Sun .. 6 Sat
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    return d;
+  }
+  function addDays(date, n){
+    const d = new Date(date);
+    d.setDate(d.getDate() + n);
+    return d;
+  }
+  function toDateInputValue(d){
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    return `${y}-${m}-${day}`;
+  }
+  function dateFromInputStartOfDay(str){
+    return new Date(str + "T00:00:00");
+  }
+  function fmtHoursMinutes(ms){
+    const totalMin = Math.floor(ms / 60000);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
+    return `${h}h ${String(m).padStart(2,"0")}m`;
+  }
+  function fmtClock(ms){
+    const totalSec = Math.floor(ms / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    return `${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`;
+  }
+  function fmtDateLabel(d){
+    return d.toLocaleDateString(undefined, {month:"short", day:"numeric"});
+  }
+
+  function clippedDuration(session, rangeStart, rangeEnd){
+    const s = session.start;
+    const e = session.end == null ? Date.now() : session.end;
+    const start = Math.max(s, rangeStart);
+    const end = Math.min(e, rangeEnd);
+    return Math.max(0, end - start);
+  }
+
+  function totalsForRange(rangeStart, rangeEnd){
+    const totals = {};
+    for(const cat of state.categories) totals[cat.id] = 0;
+    for(const s of state.sessions){
+      if(!(s.categoryId in totals)) totals[s.categoryId] = 0;
+      totals[s.categoryId] += clippedDuration(s, rangeStart, rangeEnd);
+    }
+    return totals;
+  }
+
+  function getActiveSession(){
+    return state.sessions.find(s => s.end == null) || null;
+  }
+
+  // ---------- actions ----------
+  function startTracking(catId){
+    const active = getActiveSession();
+    if(active && active.categoryId === catId){
+      stopTracking();
+      return;
+    }
+    if(active){
+      active.end = Date.now();
+    }
+    state.sessions.push({id:genId("s"), categoryId:catId, start:Date.now(), end:null});
+    save();
+    renderTracker();
+  }
+
+  function stopTracking(){
+    const active = getActiveSession();
+    if(active){
+      active.end = Date.now();
+      save();
+      renderTracker();
+    }
+  }
+
+  function addCategory(name){
+    name = name.trim();
+    if(!name) return;
+    state.categories.push({id:genId("cat"), name});
+    save();
+    renderTracker();
+  }
+
+  function renameCategory(id, newName){
+    newName = newName.trim();
+    if(!newName) return;
+    const cat = state.categories.find(c => c.id === id);
+    if(cat){
+      cat.name = newName;
+      save();
+      renderTracker();
+      if(document.getElementById("viewDashboard").classList.contains("active")) renderDashboard();
+    }
+  }
+
+  // ---------- wave svg ----------
+  const WAVE_SVG = `
+    <svg viewBox="0 0 200 44" preserveAspectRatio="none">
+      <path d="M0,26 C15,10 35,10 50,26 C65,42 85,42 100,26 C115,10 135,10 150,26 C165,42 185,42 200,26 L200,44 L0,44 Z"
+            fill="rgba(43,255,140,0.16)">
+        <animateTransform attributeName="transform" type="translate" from="0 0" to="-100 0" dur="3.2s" repeatCount="indefinite"/>
+      </path>
+      <path d="M0,30 C15,18 35,18 50,30 C65,42 85,42 100,30 C115,18 135,18 150,30 C165,42 185,42 200,30 L200,44 L0,44 Z"
+            fill="rgba(43,255,140,0.30)">
+        <animateTransform attributeName="transform" type="translate" from="0 0" to="-100 0" dur="1.9s" repeatCount="indefinite"/>
+      </path>
+    </svg>`;
+
+  // ---------- rendering: tracker ----------
+  let addingCategory = false;
+  let editingCategoryId = null;
+
+  function renderTracker(){
+    const grid = document.getElementById("catGrid");
+    const weekStart = getWeekStart(new Date());
+    const weekEnd = addDays(weekStart, 7);
+    document.getElementById("weekLabel").textContent =
+      `Week of ${fmtDateLabel(weekStart)} – ${fmtDateLabel(addDays(weekEnd,-1))}`;
+
+    const totals = totalsForRange(weekStart.getTime(), weekEnd.getTime());
+    const weekTotalMs = Object.values(totals).reduce((a,b)=>a+b,0);
+    document.getElementById("weekSummary").innerHTML =
+      `This week so far: <b>${fmtHoursMinutes(weekTotalMs)}</b>`;
+
+    const active = getActiveSession();
+
+    grid.innerHTML = "";
+    for(const cat of state.categories){
+      const card = document.createElement("div");
+      card.className = "cat-card" + (active && active.categoryId === cat.id ? " active" : "");
+      card.dataset.id = cat.id;
+
+      const wave = document.createElement("div");
+      wave.className = "wave";
+      wave.innerHTML = WAVE_SVG;
+      card.appendChild(wave);
+
+      if(editingCategoryId === cat.id){
+        const row = document.createElement("div");
+        row.className = "cat-rename-row";
+        row.style.position = "relative";
+        row.style.zIndex = "3";
+        row.innerHTML = `<input type="text" value="${escapeHtml(cat.name)}" maxlength="40" />
+          <button class="save">&#10003;</button>`;
+        card.appendChild(row);
+        const input = row.querySelector("input");
+        const saveBtn = row.querySelector(".save");
+        const commit = () => { editingCategoryId = null; renameCategory(cat.id, input.value); };
+        saveBtn.addEventListener("click", (e)=>{ e.stopPropagation(); commit(); });
+        input.addEventListener("click", e => e.stopPropagation());
+        input.addEventListener("keydown", e => {
+          if(e.key === "Enter"){ commit(); }
+          if(e.key === "Escape"){ editingCategoryId = null; renderTracker(); }
+        });
+        card.addEventListener("click", e => e.stopPropagation());
+        grid.appendChild(card);
+        setTimeout(()=>{ input.focus(); input.select(); }, 0);
+        continue;
+      }
+
+      const top = document.createElement("div");
+      top.className = "cat-top";
+      top.innerHTML = `<div class="cat-name">${escapeHtml(cat.name)}</div>
+        <button class="cat-edit" title="Rename">&#9998;</button>`;
+      card.appendChild(top);
+
+      const bottom = document.createElement("div");
+      bottom.className = "cat-bottom";
+      const isActive = active && active.categoryId === cat.id;
+      bottom.innerHTML = `
+        <div class="cat-timer" data-role="timer">${isActive ? fmtClock(Date.now()-active.start) : "00:00:00"}</div>
+        <div class="cat-week" data-role="week">This week: ${fmtHoursMinutes(totals[cat.id]||0)}</div>
+        <div class="cat-status">${isActive ? "Tracking" : "Tap to start"}</div>
+      `;
+      card.appendChild(bottom);
+
+      card.addEventListener("click", () => startTracking(cat.id));
+      top.querySelector(".cat-edit").addEventListener("click", (e) => {
+        e.stopPropagation();
+        editingCategoryId = cat.id;
+        renderTracker();
+      });
+
+      grid.appendChild(card);
+    }
+
+    // add-card
+    const addCard = document.createElement("div");
+    if(addingCategory){
+      addCard.className = "add-card editing";
+      addCard.innerHTML = `
+        <input type="text" id="newCatInput" placeholder="Segment name" maxlength="40" />
+        <div class="row">
+          <button class="save">Add</button>
+          <button class="cancel">Cancel</button>
+        </div>`;
+      grid.appendChild(addCard);
+      const input = addCard.querySelector("#newCatInput");
+      const commit = () => {
+        addingCategory = false;
+        addCategory(input.value);
+      };
+      addCard.querySelector(".save").addEventListener("click", commit);
+      addCard.querySelector(".cancel").addEventListener("click", () => {
+        addingCategory = false;
+        renderTracker();
+      });
+      input.addEventListener("keydown", e => {
+        if(e.key === "Enter") commit();
+        if(e.key === "Escape"){ addingCategory = false; renderTracker(); }
+      });
+      setTimeout(()=> input.focus(), 0);
+    } else {
+      addCard.className = "add-card";
+      addCard.innerHTML = "+ Add segment";
+      addCard.addEventListener("click", () => {
+        addingCategory = true;
+        renderTracker();
+      });
+      grid.appendChild(addCard);
+    }
+
+    // stop bar
+    const stopBar = document.getElementById("stopBar");
+    if(active){
+      stopBar.style.display = "flex";
+      const cat = state.categories.find(c => c.id === active.categoryId);
+      document.getElementById("activeCatName").textContent = cat ? cat.name : "?";
+      document.getElementById("activeElapsed").textContent = fmtClock(Date.now()-active.start);
+    } else {
+      stopBar.style.display = "none";
+    }
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement("div");
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // lightweight per-second tick: update only live numbers, no full re-render
+  function tick(){
+    const active = getActiveSession();
+    if(!active) return;
+    document.querySelectorAll(".cat-card.active [data-role='timer']").forEach(el=>{
+      el.textContent = fmtClock(Date.now() - active.start);
+    });
+    const elapsedEl = document.getElementById("activeElapsed");
+    if(elapsedEl) elapsedEl.textContent = fmtClock(Date.now() - active.start);
+
+    // refresh this-week total for the active category (grows every second)
+    const weekStart = getWeekStart(new Date());
+    const weekEnd = addDays(weekStart, 7);
+    const totals = totalsForRange(weekStart.getTime(), weekEnd.getTime());
+    const weekTotalMs = Object.values(totals).reduce((a,b)=>a+b,0);
+    document.getElementById("weekSummary").innerHTML = `This week so far: <b>${fmtHoursMinutes(weekTotalMs)}</b>`;
+    document.querySelectorAll(".cat-card").forEach(card=>{
+      const id = card.dataset.id;
+      const weekEl = card.querySelector("[data-role='week']");
+      if(weekEl && id in totals) weekEl.textContent = `This week: ${fmtHoursMinutes(totals[id])}`;
+    });
+  }
+  setInterval(tick, 1000);
+
+  document.getElementById("stopBtn").addEventListener("click", stopTracking);
+
+  // ---------- rendering: dashboard ----------
+  let currentRange = null; // {start, end, label}
+
+  function setQuickRangeActive(key){
+    document.querySelectorAll("#quickRanges button").forEach(b=>{
+      b.classList.toggle("active", b.dataset.range === key);
+    });
+  }
+
+  function applyQuickRange(key){
+    const now = new Date();
+    let start, end;
+    if(key === "week"){
+      start = getWeekStart(now);
+      end = addDays(start, 7);
+    } else if(key === "lastweek"){
+      const thisWeekStart = getWeekStart(now);
+      start = addDays(thisWeekStart, -7);
+      end = thisWeekStart;
+    } else if(key === "month"){
+      start = new Date(now.getFullYear(), now.getMonth(), 1);
+      end = new Date(now.getFullYear(), now.getMonth()+1, 1);
+    } else { // all
+      if(state.sessions.length === 0){
+        start = getWeekStart(now);
+      } else {
+        const earliest = Math.min(...state.sessions.map(s=>s.start));
+        start = new Date(earliest);
+        start.setHours(0,0,0,0);
+      }
+      end = addDays(new Date(now.getFullYear(), now.getMonth(), now.getDate()), 1);
+    }
+    document.getElementById("fromDate").value = toDateInputValue(start);
+    document.getElementById("toDate").value = toDateInputValue(addDays(end,-1));
+    setQuickRangeActive(key);
+    currentRange = {start: start.getTime(), end: end.getTime()};
+    renderDashboard();
+  }
+
+  function applyCustomRange(){
+    const fromStr = document.getElementById("fromDate").value;
+    const toStr = document.getElementById("toDate").value;
+    if(!fromStr || !toStr) return;
+    const start = dateFromInputStartOfDay(fromStr);
+    const end = addDays(dateFromInputStartOfDay(toStr), 1);
+    if(start.getTime() > end.getTime()) return;
+    setQuickRangeActive(null);
+    currentRange = {start: start.getTime(), end: end.getTime()};
+    renderDashboard();
+  }
+
+  let showTable = false;
+
+  function renderDashboard(){
+    if(!currentRange) return;
+    const {start, end} = currentRange;
+    const totals = totalsForRange(start, end);
+    const totalMs = Object.values(totals).reduce((a,b)=>a+b,0);
+
+    document.getElementById("rangeCaption").textContent =
+      `${fmtDateLabel(new Date(start))} – ${fmtDateLabel(addDays(new Date(end),-1))}`;
+    document.getElementById("totalHours").textContent = fmtHoursMinutes(totalMs);
+
+    const rows = state.categories
+      .map(cat => ({cat, ms: totals[cat.id] || 0}))
+      .sort((a,b) => b.ms - a.ms);
+
+    const maxMs = Math.max(1, ...rows.map(r => r.ms));
+    const barList = document.getElementById("barList");
+    const emptyNote = document.getElementById("emptyNote");
+    barList.innerHTML = "";
+
+    if(totalMs === 0){
+      emptyNote.style.display = "block";
+    } else {
+      emptyNote.style.display = "none";
+    }
+
+    rows.forEach((r, i) => {
+      const ratio = r.ms / maxMs;
+      const lightness = 34 + Math.round(ratio * 30); // sequential green ramp by magnitude
+      const row = document.createElement("div");
+      row.className = "bar-row";
+      row.innerHTML = `
+        <div class="name">${escapeHtml(r.cat.name)}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(ratio*100).toFixed(1)}%; background:hsl(150,85%,${lightness}%);"></div></div>
+        <div class="value">${fmtHoursMinutes(r.ms)}</div>
+      `;
+      barList.appendChild(row);
+    });
+
+    const body = document.getElementById("detailsBody");
+    body.innerHTML = "";
+    rows.forEach(r => {
+      const pct = totalMs > 0 ? ((r.ms / totalMs) * 100).toFixed(1) : "0.0";
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td class="cat">${escapeHtml(r.cat.name)}</td><td class="num">${fmtHoursMinutes(r.ms)}</td><td>${pct}%</td>`;
+      body.appendChild(tr);
+    });
+  }
+
+  document.getElementById("applyRange").addEventListener("click", applyCustomRange);
+  document.querySelectorAll("#quickRanges button").forEach(btn=>{
+    btn.addEventListener("click", () => applyQuickRange(btn.dataset.range));
+  });
+  document.getElementById("tableToggle").addEventListener("click", () => {
+    showTable = !showTable;
+    document.getElementById("detailsTable").classList.toggle("show", showTable);
+    document.getElementById("tableToggle").textContent = showTable ? "Hide details table" : "Show details table";
+  });
+
+  // ---------- tabs ----------
+  const tabTracker = document.getElementById("tabTracker");
+  const tabDashboard = document.getElementById("tabDashboard");
+  const viewTracker = document.getElementById("viewTracker");
+  const viewDashboard = document.getElementById("viewDashboard");
+
+  tabTracker.addEventListener("click", () => {
+    tabTracker.classList.add("active");
+    tabDashboard.classList.remove("active");
+    viewTracker.classList.add("active");
+    viewDashboard.classList.remove("active");
+  });
+  tabDashboard.addEventListener("click", () => {
+    tabDashboard.classList.add("active");
+    tabTracker.classList.remove("active");
+    viewDashboard.classList.add("active");
+    viewTracker.classList.remove("active");
+    if(!currentRange) applyQuickRange("week");
+    else renderDashboard();
+  });
+
+  // ---------- settings: export / import ----------
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsPanel = document.getElementById("settingsPanel");
+  settingsBtn.addEventListener("click", () => settingsPanel.classList.toggle("show"));
+
+  document.getElementById("exportBtn").addEventListener("click", () => {
+    const blob = new Blob([JSON.stringify(state, null, 2)], {type:"application/json"});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `timetracker-backup-${toDateInputValue(new Date())}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  const importFile = document.getElementById("importFile");
+  document.getElementById("importBtn").addEventListener("click", () => importFile.click());
+  importFile.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if(!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try{
+        const parsed = JSON.parse(reader.result);
+        if(!parsed || !Array.isArray(parsed.categories) || !Array.isArray(parsed.sessions)){
+          alert("That file doesn't look like a valid TimeTracker backup.");
+          return;
+        }
+        state = parsed;
+        save();
+        renderTracker();
+        currentRange = null;
+        if(viewDashboard.classList.contains("active")) applyQuickRange("week");
+        alert("Backup imported.");
+      }catch(err){
+        alert("Could not read that file as JSON.");
+      }
+    };
+    reader.readAsText(file);
+    importFile.value = "";
+  });
+
+  // ---------- init ----------
+  renderTracker();
+})();
+</script>
+</body>
+</html>
