@@ -673,6 +673,10 @@
     <button id="signOutBtn">Sign Out</button>
   </div>
 
+  <div class="import-banner" id="flashBanner" style="border-color:var(--border-active);">
+    <span class="desc" id="flashBannerText"></span>
+  </div>
+
   <div class="import-banner" id="importBanner">
     <span class="desc">We found <b>time-tracking data saved in this browser</b> from before you had an account. Import it into your account?</span>
     <button class="do-import" id="doImportBtn">Import it</button>
@@ -1675,9 +1679,19 @@
   });
 
   // ---------- init ----------
-  sb.auth.getSession().then(({data}) => {
+  const cameFromEmailConfirm = location.hash.includes("access_token");
+  if(cameFromEmailConfirm){
+    history.replaceState(null, "", location.pathname + location.search);
+  }
+  sb.auth.getSession().then(async ({data}) => {
     if(data.session){
-      initApp(data.session.user);
+      await initApp(data.session.user);
+      if(cameFromEmailConfirm){
+        const flash = document.getElementById("flashBanner");
+        document.getElementById("flashBannerText").textContent = "Email confirmed — you're signed in.";
+        flash.classList.add("show");
+        setTimeout(() => flash.classList.remove("show"), 4000);
+      }
     } else {
       authScreen.style.display = "flex";
     }
