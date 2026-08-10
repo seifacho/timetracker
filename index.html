@@ -535,10 +535,95 @@
   @media (max-width:520px){
     .bar-row{grid-template-columns:90px 1fr 74px;}
   }
+
+  /* ---- Auth screen ---- */
+  #authScreen{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .auth-card{
+    width:100%;
+    max-width:340px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:26px 24px;
+  }
+  .auth-card h1{
+    font-size:20px;
+    margin:0 0 4px;
+    text-align:center;
+  }
+  .auth-card h1 span{color:var(--green);}
+  .auth-card .sub{
+    color:var(--muted);
+    font-size:12.5px;
+    text-align:center;
+    margin-bottom:20px;
+  }
+  .auth-card label{
+    display:block;
+    color:var(--muted);
+    font-size:12px;
+    margin-bottom:5px;
+  }
+  .auth-card input{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border-active);
+    color:var(--text);
+    border-radius:8px;
+    padding:9px 11px;
+    font-size:14px;
+    margin-bottom:14px;
+  }
+  .auth-card .auth-actions{
+    display:flex;
+    gap:8px;
+  }
+  .auth-card button{
+    flex:1;
+    border:none;
+    border-radius:8px;
+    padding:10px 0;
+    cursor:pointer;
+    font-size:13px;
+    font-weight:600;
+  }
+  .auth-card .signin{background:var(--green); color:#04140a;}
+  .auth-card .signup{background:var(--panel-2); color:var(--text); border:1px solid var(--border);}
+  .auth-card .auth-msg{
+    min-height:16px;
+    color:#ff8080;
+    font-size:12px;
+    margin-top:12px;
+    text-align:center;
+  }
+  .auth-card .auth-msg.ok{color:var(--green);}
 </style>
 </head>
 <body>
-<div class="wrap">
+
+<div id="authScreen" style="display:none;">
+  <div class="auth-card">
+    <h1>Time<span>Tracker</span></h1>
+    <div class="sub">Sign in to sync across your devices</div>
+    <label for="authEmail">Email</label>
+    <input type="email" id="authEmail" autocomplete="username" />
+    <label for="authPassword">Password</label>
+    <input type="password" id="authPassword" autocomplete="current-password" />
+    <div class="auth-actions">
+      <button class="signin" id="signInBtn">Sign In</button>
+      <button class="signup" id="signUpBtn">Sign Up</button>
+    </div>
+    <div class="auth-msg" id="authMsg"></div>
+  </div>
+</div>
+
+<div class="wrap" id="appRoot" style="display:none;">
 
   <header>
     <div class="brand">
@@ -555,10 +640,11 @@
   </header>
 
   <div class="settings-panel" id="settingsPanel">
-    <span class="desc">Data is stored only in this browser. Export a backup regularly, or import one to restore it.</span>
+    <span class="desc">Data syncs to your account. Export a backup regularly, or import one to restore it.</span>
     <button id="exportBtn">Export JSON</button>
     <button id="importBtn">Import JSON</button>
     <input type="file" id="importFile" accept="application/json" style="display:none" />
+    <button id="signOutBtn">Sign Out</button>
   </div>
 
   <!-- Tracker -->
@@ -624,11 +710,17 @@
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
   "use strict";
-  const STORAGE_KEY = "timetracker_v1";
   const DEFAULT_COLOR = "#2bff8c";
+
+  // ---------- Supabase config ----------
+  const SUPABASE_URL = "https://mggxzbhcirogmuxikmmw.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_nQqJy6BuJMpucDWYBexVeA_1M6UbhnQ";
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  let currentUser = null;
 
   function genId(prefix){
     return prefix + "_" + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
@@ -647,29 +739,41 @@
     };
   }
 
-  function load(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(raw){
-        const parsed = JSON.parse(raw);
-        if(parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.sessions)){
-          parsed.categories.forEach(c => {
-            if(!c.color) c.color = DEFAULT_COLOR;
-            if(c.archived == null) c.archived = false;
-          });
-          if(!Array.isArray(parsed.adjustments)) parsed.adjustments = [];
-          return parsed;
-        }
-      }
-    }catch(e){}
-    return defaultState();
+  function normalizeState(parsed){
+    parsed.categories.forEach(c => {
+      if(!c.color) c.color = DEFAULT_COLOR;
+      if(c.archived == null) c.archived = false;
+    });
+    if(!Array.isArray(parsed.adjustments)) parsed.adjustments = [];
+    return parsed;
   }
 
+  async function loadState(userId){
+    const { data, error } = await sb
+      .from("user_data")
+      .select("state")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if(!error && data && data.state && Array.isArray(data.state.categories)){
+      return normalizeState(data.state);
+    }
+    const fresh = defaultState();
+    await sb.from("user_data").insert({ user_id: userId, state: fresh });
+    return fresh;
+  }
+
+  let saveTimer = null;
   function save(){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    if(!currentUser) return;
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      sb.from("user_data")
+        .upsert({ user_id: currentUser.id, state, updated_at: new Date().toISOString() })
+        .then(({error}) => { if(error) console.error("Save failed:", error.message); });
+    }, 300);
   }
 
-  let state = load();
+  let state = null;
 
   // ---------- time helpers ----------
   function getWeekStart(date){
@@ -1123,8 +1227,6 @@
       if(weekEl && id in totals) weekEl.textContent = `This week: ${fmtHoursMinutes(totals[id])}`;
     });
   }
-  setInterval(tick, 1000);
-
   document.getElementById("stopBtn").addEventListener("click", stopTracking);
 
   // ---------- rendering: dashboard ----------
@@ -1456,8 +1558,64 @@
     importFile.value = "";
   });
 
+  document.getElementById("signOutBtn").addEventListener("click", async () => {
+    await sb.auth.signOut();
+    location.reload();
+  });
+
+  // ---------- auth ----------
+  const authScreen = document.getElementById("authScreen");
+  const appRoot = document.getElementById("appRoot");
+  const authEmail = document.getElementById("authEmail");
+  const authPassword = document.getElementById("authPassword");
+  const authMsg = document.getElementById("authMsg");
+
+  function showAuthMsg(text, ok){
+    authMsg.textContent = text || "";
+    authMsg.classList.toggle("ok", !!ok);
+  }
+
+  async function initApp(user){
+    currentUser = user;
+    state = await loadState(user.id);
+    authScreen.style.display = "none";
+    appRoot.style.display = "";
+    renderTracker();
+    setInterval(tick, 1000);
+  }
+
+  document.getElementById("signInBtn").addEventListener("click", async () => {
+    showAuthMsg("");
+    const { data, error } = await sb.auth.signInWithPassword({
+      email: authEmail.value.trim(),
+      password: authPassword.value
+    });
+    if(error){ showAuthMsg(error.message); return; }
+    initApp(data.user);
+  });
+
+  document.getElementById("signUpBtn").addEventListener("click", async () => {
+    showAuthMsg("");
+    const { data, error } = await sb.auth.signUp({
+      email: authEmail.value.trim(),
+      password: authPassword.value
+    });
+    if(error){ showAuthMsg(error.message); return; }
+    if(data.session){
+      initApp(data.user);
+    } else {
+      showAuthMsg("Account created. Check your email to confirm, then sign in.", true);
+    }
+  });
+
   // ---------- init ----------
-  renderTracker();
+  sb.auth.getSession().then(({data}) => {
+    if(data.session){
+      initApp(data.session.user);
+    } else {
+      authScreen.style.display = "flex";
+    }
+  });
 })();
 </script>
 </body>
