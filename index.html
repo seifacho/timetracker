@@ -603,6 +603,32 @@
     text-align:center;
   }
   .auth-card .auth-msg.ok{color:var(--green);}
+
+  /* ---- Legacy import banner ---- */
+  .import-banner{
+    display:none;
+    background:var(--panel);
+    border:1px solid var(--border-active);
+    border-radius:12px;
+    padding:14px 16px;
+    margin-bottom:16px;
+    gap:10px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+  .import-banner.show{display:flex;}
+  .import-banner .desc{color:var(--muted); font-size:12.5px; flex:1 1 220px;}
+  .import-banner .desc b{color:var(--text);}
+  .import-banner button{
+    border:none;
+    border-radius:8px;
+    padding:8px 14px;
+    cursor:pointer;
+    font-size:12.5px;
+    font-weight:600;
+  }
+  .import-banner .do-import{background:var(--green); color:#04140a;}
+  .import-banner .dismiss{background:var(--panel-2); color:var(--muted); border:1px solid var(--border);}
 </style>
 </head>
 <body>
@@ -645,6 +671,12 @@
     <button id="importBtn">Import JSON</button>
     <input type="file" id="importFile" accept="application/json" style="display:none" />
     <button id="signOutBtn">Sign Out</button>
+  </div>
+
+  <div class="import-banner" id="importBanner">
+    <span class="desc">We found <b>time-tracking data saved in this browser</b> from before you had an account. Import it into your account?</span>
+    <button class="do-import" id="doImportBtn">Import it</button>
+    <button class="dismiss" id="dismissImportBtn">Dismiss</button>
   </div>
 
   <!-- Tracker -->
@@ -715,6 +747,19 @@
 (function(){
   "use strict";
   const DEFAULT_COLOR = "#2bff8c";
+  const LEGACY_STORAGE_KEY = "timetracker_v1";
+
+  function getLegacyLocalState(){
+    try{
+      const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
+      if(!raw) return null;
+      const parsed = JSON.parse(raw);
+      if(parsed && Array.isArray(parsed.categories) && Array.isArray(parsed.sessions)){
+        return normalizeState(parsed);
+      }
+    }catch(e){}
+    return null;
+  }
 
   // ---------- Supabase config ----------
   const SUPABASE_URL = "https://mggxzbhcirogmuxikmmw.supabase.co";
@@ -755,11 +800,11 @@
       .eq("user_id", userId)
       .maybeSingle();
     if(!error && data && data.state && Array.isArray(data.state.categories)){
-      return normalizeState(data.state);
+      return { state: normalizeState(data.state), isNew: false };
     }
     const fresh = defaultState();
     await sb.from("user_data").insert({ user_id: userId, state: fresh });
-    return fresh;
+    return { state: fresh, isNew: true };
   }
 
   let saveTimer = null;
@@ -1577,11 +1622,32 @@
 
   async function initApp(user){
     currentUser = user;
-    state = await loadState(user.id);
+    const result = await loadState(user.id);
+    state = result.state;
     authScreen.style.display = "none";
     appRoot.style.display = "";
     renderTracker();
     setInterval(tick, 1000);
+
+    if(result.isNew){
+      const legacy = getLegacyLocalState();
+      if(legacy){
+        document.getElementById("importBanner").classList.add("show");
+        document.getElementById("doImportBtn").onclick = () => {
+          state = legacy;
+          save();
+          document.getElementById("importBanner").classList.remove("show");
+          renderTracker();
+          if(document.getElementById("viewDashboard").classList.contains("active")){
+            currentRange = null;
+            applyQuickRange("week");
+          }
+        };
+        document.getElementById("dismissImportBtn").onclick = () => {
+          document.getElementById("importBanner").classList.remove("show");
+        };
+      }
+    }
   }
 
   document.getElementById("signInBtn").addEventListener("click", async () => {
