@@ -4,20 +4,23 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>TimeTracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   :root{
-    --bg:#07090a;
-    --panel:#0d1310;
-    --panel-2:#121a17;
-    --border:#1c2822;
-    --border-active:#1e5c3a;
-    --green:#2bff8c;
-    --green-dim:#0f7a44;
-    --green-glow:rgba(43,255,140,0.35);
-    --text:#e7f3ec;
-    --muted:#7c9488;
-    --muted-2:#4d5f57;
-    --radius:14px;
+    --bg:#01050b;
+    --panel:rgba(255,255,255,0.048);
+    --panel-2:rgba(255,255,255,0.085);
+    --border:rgba(255,255,255,0.10);
+    --border-active:rgba(167,139,250,0.55);
+    --green:#a78bfa;
+    --green-dim:#6d4fd6;
+    --green-glow:rgba(167,139,250,0.40);
+    --text:#eef0ff;
+    --muted:#9aa0c4;
+    --muted-2:#6b7099;
+    --radius:20px;
     --mono:'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
   }
   *{box-sizing:border-box;}
@@ -629,9 +632,123 @@
   }
   .import-banner .do-import{background:var(--green); color:#04140a;}
   .import-banner .dismiss{background:var(--panel-2); color:var(--muted); border:1px solid var(--border);}
+
+  /* ===================== Liquid Ink theme layer ===================== */
+
+  body{
+    font-family:'Inter Tight', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+
+  /* --- drifting liquid blobs --- */
+  .blobs{
+    position:fixed;
+    inset:0;
+    overflow:hidden;
+    pointer-events:none;
+    z-index:0;
+  }
+  .blob{
+    position:absolute;
+    display:block;
+    border-radius:50%;
+    filter:blur(90px);
+    opacity:.5;
+    will-change:transform;
+  }
+  .blob.b1{
+    width:46vmax; height:46vmax;
+    top:-16vmax; left:-12vmax;
+    background:radial-gradient(circle at 35% 35%, #7c5cff, transparent 70%);
+    animation:drift1 26s ease-in-out infinite;
+  }
+  .blob.b2{
+    width:38vmax; height:38vmax;
+    top:30vh; right:-14vmax;
+    background:radial-gradient(circle at 50% 50%, #ff5cb8, transparent 70%);
+    animation:drift2 32s ease-in-out infinite;
+  }
+  .blob.b3{
+    width:34vmax; height:34vmax;
+    bottom:-14vmax; left:24vw;
+    background:radial-gradient(circle at 50% 50%, #35c9ff, transparent 70%);
+    animation:drift3 29s ease-in-out infinite;
+  }
+  @keyframes drift1{
+    0%,100%{transform:translate(0,0) scale(1);}
+    33%{transform:translate(7vw,5vh) scale(1.12);}
+    66%{transform:translate(3vw,-4vh) scale(.94);}
+  }
+  @keyframes drift2{
+    0%,100%{transform:translate(0,0) scale(1);}
+    33%{transform:translate(-8vw,-6vh) scale(.92);}
+    66%{transform:translate(-3vw,6vh) scale(1.1);}
+  }
+  @keyframes drift3{
+    0%,100%{transform:translate(0,0) scale(1);}
+    50%{transform:translate(6vw,-7vh) scale(1.15);}
+  }
+
+  .wrap, #authScreen{position:relative; z-index:1;}
+
+  /* --- frosted glass surfaces (kept off .cat-card for phone performance) --- */
+  .panel, .stop-bar, .settings-panel, .import-banner, .auth-card, nav.tabs{
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+  }
+  .cat-card, .panel, .auth-card, .add-card{border-radius:22px;}
+  .cat-card, .panel, .auth-card{box-shadow:0 12px 32px -14px rgba(0,0,0,.75);}
+  .stop-bar, .settings-panel, .import-banner{border-radius:18px;}
+
+  /* --- springy interactions --- */
+  .cat-card{transition:transform .3s cubic-bezier(.34,1.56,.64,1), border-color .2s, box-shadow .3s, background .2s;}
+  .add-card, .icon-btn{transition:transform .3s cubic-bezier(.34,1.56,.64,1), border-color .15s, color .15s;}
+  button{transition:transform .2s cubic-bezier(.34,1.56,.64,1), background .2s, color .2s, border-color .2s;}
+  @media (hover:hover){
+    .cat-card:hover{transform:translateY(-4px) scale(1.015); border-color:var(--border-active);}
+    .add-card:hover{transform:translateY(-3px);}
+    .icon-btn:hover{transform:translateY(-2px);}
+  }
+  .cat-card:active{transform:scale(.985);}
+  button:active{transform:scale(.95);}
+
+  /* --- active card tint --- */
+  .cat-card.active{
+    background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.035));
+  }
+
+  /* --- readable text on accent-filled buttons --- */
+  nav.tabs button.active,
+  .add-card .row .save,
+  .range-row button.apply,
+  .auth-card .signin,
+  .import-banner .do-import{color:#0a0518;}
+  .cat-rename-row button, .cat-adjust-row button, .cat-delete-row button{color:#f4f0ff;}
+  .mode-btn.active, .quick-ranges button.active{background:rgba(167,139,250,.16);}
+  .cat-card.active .cat-week{color:#cfc4ff;}
+
+  /* --- tab view transition --- */
+  section.active{animation:fadeUp .4s ease both;}
+  @keyframes fadeUp{
+    from{opacity:0; transform:translateY(10px);}
+    to{opacity:1; transform:none;}
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .blob{animation:none;}
+    section.active{animation:none;}
+    .cat-card, .add-card, .icon-btn, button{transition:none;}
+    .cat-card.active{animation:none;}
+  }
 </style>
 </head>
 <body>
+
+<div class="blobs" aria-hidden="true">
+  <span class="blob b1"></span>
+  <span class="blob b2"></span>
+  <span class="blob b3"></span>
+</div>
 
 <div id="authScreen" style="display:none;">
   <div class="auth-card">
@@ -750,7 +867,7 @@
 <script>
 (function(){
   "use strict";
-  const DEFAULT_COLOR = "#2bff8c";
+  const DEFAULT_COLOR = "#a78bfa";
   const LEGACY_STORAGE_KEY = "timetracker_v1";
 
   function getLegacyLocalState(){
