@@ -98,6 +98,25 @@
     transition:border-color .15s, color .15s;
   }
   .icon-btn:hover{border-color:var(--border-active); color:var(--green);}
+  .profile-dropdown{
+    display:none;
+    position:absolute;
+    top:44px;
+    right:0;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:10px 14px;
+    white-space:nowrap;
+    z-index:10;
+    box-shadow:0 12px 32px -14px rgba(0,0,0,.75);
+  }
+  .profile-dropdown.show{display:block;}
+  .profile-email{
+    font-size:12.5px;
+    color:var(--text);
+    font-family:var(--mono);
+  }
 
   section{display:none;}
   section.active{display:block;}
@@ -828,6 +847,12 @@
         <button id="tabDashboard">Dashboard</button>
       </nav>
       <button class="icon-btn" id="settingsBtn" title="Settings">&#9881;</button>
+      <div style="position:relative;">
+        <button class="icon-btn" id="profileBtn" title="Account">&#128100;</button>
+        <div class="profile-dropdown" id="profileDropdown">
+          <div class="profile-email" id="profileEmail"></div>
+        </div>
+      </div>
     </div>
   </header>
 
@@ -1779,6 +1804,17 @@
     importFile.value = "";
   });
 
+  document.getElementById("profileBtn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    document.getElementById("profileDropdown").classList.toggle("show");
+  });
+  document.addEventListener("click", (e) => {
+    const dropdown = document.getElementById("profileDropdown");
+    if(dropdown.classList.contains("show") && !dropdown.contains(e.target) && e.target.id !== "profileBtn"){
+      dropdown.classList.remove("show");
+    }
+  });
+
   document.getElementById("signOutBtn").addEventListener("click", async () => {
     await sb.auth.signOut();
     location.reload();
@@ -1798,6 +1834,7 @@
 
   async function initApp(user){
     currentUser = user;
+    document.getElementById("profileEmail").textContent = user.email || "";
     const result = await loadState(user.id);
     state = result.state;
     authScreen.style.display = "none";
